@@ -1,7 +1,3 @@
-streamlit
-langchain
-unstructured
-pdf2image
-pytesseract
-openai
-
+streamlit==0.88.0
+openai==0.27.0
+PyPDF2==1.26.0
