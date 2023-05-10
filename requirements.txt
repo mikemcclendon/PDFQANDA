@@ -3,3 +3,4 @@ langchain
 unstructured
 pdf2image
 pytesseract
+openai
