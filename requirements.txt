@@ -4,4 +4,4 @@ unstructured
 pdf2image
 pytesseract
 openai
-
+poppler
