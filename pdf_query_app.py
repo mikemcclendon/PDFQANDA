@@ -8,6 +8,12 @@ import os
 
 def process_pdf_file(pdf_file, query, openai_key):
     os.environ["OPENAI_API_KEY"] = openai_key
+    
+       # Save the uploaded file to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        tmp_file.write(pdf_file.read())
+        tmp_file_path = tmp_file.name
+        
     loader = UnstructuredPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -24,6 +30,9 @@ def process_pdf_file(pdf_file, query, openai_key):
     docs = docsearch.get_relevant_documents(query)
     chain = load_qa_chain(OpenAI(temperature=0), chain_type="stuff")
     output = chain.run(input_documents=docs, question=query)
+    
+     # After processing, delete the temporary file
+    os.remove(tmp_file_path)
     return output
 
 
