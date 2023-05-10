@@ -1,2 +1,3 @@
-streamlit
-langchain
+streamlit==latest
+langchain==latest
+unstructured==latest
