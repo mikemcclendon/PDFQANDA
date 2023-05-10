@@ -12,10 +12,10 @@ def process_pdf_file(pdf_file, query, openai_key):
     
        # Save the uploaded file to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(pdf_file.read())
+        tmp_file.write(pdf_file.getvalue())
         tmp_file_path = tmp_file.name
         
-    loader = UnstructuredPDFLoader(pdf_file)
+    loader = UnstructuredPDFLoader(tmp_file_path)
     pages = loader.load_and_split()
 
     # Filter out invalid metadata
