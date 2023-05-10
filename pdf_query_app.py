@@ -1,21 +1,14 @@
 import streamlit as st
-from langchain.document_loaders import UnstructuredPDFLoader
+from langchain.document_loaders import UnstructuredTextLoader
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
 import os
-import tempfile
 
-def process_pdf_file(pdf_file, query, openai_key):
+def process_text(text, query, openai_key):
     os.environ["OPENAI_API_KEY"] = openai_key
-    
-       # Save the uploaded file to a temporary file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(pdf_file.getvalue())
-        tmp_file_path = tmp_file.name
-        
-    loader = UnstructuredPDFLoader(tmp_file_path)
+    loader = UnstructuredTextLoader(text)
     pages = loader.load_and_split()
 
     # Filter out invalid metadata
@@ -31,24 +24,20 @@ def process_pdf_file(pdf_file, query, openai_key):
     docs = docsearch.get_relevant_documents(query)
     chain = load_qa_chain(OpenAI(temperature=0), chain_type="stuff")
     output = chain.run(input_documents=docs, question=query)
-    
-     # After processing, delete the temporary file
-    os.remove(tmp_file_path)
     return output
 
+st.title("Text Query App")
+st.write("Enter text and a query to find relevant information.")
 
-st.title("PDF Query App")
-st.write("Upload a PDF file and enter a query to find relevant information in the document.")
+input_text = st.text_area("Enter your text", "")
 
-uploaded_pdf = st.file_uploader("Upload PDF file", type=["pdf"])
-
-if uploaded_pdf:
+if input_text:
     query = st.text_input("Enter your query", "")
     openai_key = st.text_input("Enter your OpenAI API key", "")
 
     if query and openai_key:
         if st.button("Process"):
             with st.spinner("Processing..."):
-                result = process_pdf_file(uploaded_pdf, query, openai_key)
+                result = process_text(input_text, query, openai_key)
                 st.write("Result:")
                 st.write(result)
