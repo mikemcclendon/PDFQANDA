@@ -1,43 +1,49 @@
 import streamlit as st
-from langchain.document_loaders import UnstructuredTextLoader
-from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import OpenAI
-from langchain.chains.question_answering import load_qa_chain
-import os
+import openai
+import PyPDF2
+from io import BytesIO
 
-def process_text(text, query, openai_key):
-    os.environ["OPENAI_API_KEY"] = openai_key
-    loader = UnstructuredTextLoader(text)
-    pages = loader.load_and_split()
+# Function to convert PDF file to text
+def convert_pdf_to_text(file):
+    pdfReader = PyPDF2.PdfFileReader(file)
+    text = ""
+    for page in range(pdfReader.numPages):
+        text += pdfReader.getPage(page).extractText()
+    return text
 
-    # Filter out invalid metadata
-    filtered_pages = []
-    for page in pages:
-        filtered_metadata = {k: v for k, v in page.metadata.items() if isinstance(v, (str, int, float))}
-        page.metadata = filtered_metadata
-        filtered_pages.append(page)
+# Function to query OpenAI with the text and a question
+def query_openai(text, question, openai_key):
+    openai.api_key = openai_key
+    response = openai.Answer.create(
+        search_model="davinci",
+        document=text,
+        question=question,
+        max_responses=1,
+        stop=None,
+        lls_model="text-davinci-002",
+        log_level="info",
+        logprobs=None,
+        lls_model_kwargs={"temperature": 0.5},
+    )
+    return response.choices[0].text.strip()
 
-    embeddings = OpenAIEmbeddings()
-    docsearch = Chroma.from_documents(filtered_pages, embeddings).as_retriever()
+st.title("OpenAI PDF Query App")
+st.write("Upload a PDF file and enter a query to find relevant information in the document.")
 
-    docs = docsearch.get_relevant_documents(query)
-    chain = load_qa_chain(OpenAI(temperature=0), chain_type="stuff")
-    output = chain.run(input_documents=docs, question=query)
-    return output
+uploaded_pdf = st.file_uploader("Upload PDF file", type=["pdf"])
 
-st.title("Text Query App")
-st.write("Enter text and a query to find relevant information.")
-
-input_text = st.text_area("Enter your text", "")
-
-if input_text:
+if uploaded_pdf:
     query = st.text_input("Enter your query", "")
     openai_key = st.text_input("Enter your OpenAI API key", "")
 
     if query and openai_key:
         if st.button("Process"):
             with st.spinner("Processing..."):
-                result = process_text(input_text, query, openai_key)
+                # Convert the uploaded file object to a BytesIO object
+                pdf_file = BytesIO(uploaded_pdf.getvalue())
+                # Convert the PDF to text
+                pdf_text = convert_pdf_to_text(pdf_file)
+                # Query OpenAI with the text and the question
+                result = query_openai(pdf_text, query, openai_key)
                 st.write("Result:")
                 st.write(result)
