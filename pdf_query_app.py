@@ -5,6 +5,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
 import os
+import tempfile
 
 def process_pdf_file(pdf_file, query, openai_key):
     os.environ["OPENAI_API_KEY"] = openai_key
