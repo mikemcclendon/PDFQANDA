@@ -12,20 +12,19 @@ def convert_pdf_to_text(file):
     return text
 
 # Function to query OpenAI with the text and a question
-def query_openai(text, question, openai_key):
+def query_openai(document, question, openai_key):
     openai.api_key = openai_key
-    response = openai.Answer.create(
-        search_model="davinci",
-        document=text,
-        question=question,
-        max_responses=1,
-        stop=None,
-        lls_model="text-davinci-002",
-        log_level="info",
-        logprobs=None,
-        lls_model_kwargs={"temperature": 0.5},
+
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt=f"{document}\n\nQuestion: {question}\nAnswer:",
+        temperature=0.5,
+        max_tokens=150
     )
-    return response.choices[0].text.strip()
+
+    answer = response.choices[0].text.strip()
+    return answer
+
 
 st.title("OpenAI PDF Query App")
 st.write("Upload a PDF file and enter a query to find relevant information in the document.")
